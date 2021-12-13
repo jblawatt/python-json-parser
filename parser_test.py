@@ -1,11 +1,18 @@
 import pytest
+from functools import partial
 from parser import (
+    parse_all,
+    parse_char_func,
+    parse_span,
     parser_json_null,
     parse_char,
     parse_string,
     parse_boolean,
     Nothing,
+    NothingType,
     parse_any,
+    parse_int,
+    parse_span,
 )
 
 
@@ -55,3 +62,32 @@ def test_parse_boolean_nothing():
     value, rest = parse_boolean("rest")
     assert value == Nothing
     assert rest == "rest"
+
+
+def test_parse_char_func():
+    value, rest = parse_char_func(str.isdigit, "12test")
+    assert value == "1"
+    assert rest == "test"
+
+
+def test_parse_span():
+    value, rest = parse_span(str.isdigit, "123vier")
+    assert value == "123"
+    assert rest == "vier"
+
+
+def test_parse_int():
+    value, rest = parse_int("123vier")
+    assert value == 123
+    assert rest == "vier"
+
+
+def test_parser_all():
+    value, rest = parse_all(
+        "12.34asdf", 
+        partial(parse_span, func=str.isdigit),
+        lambda t: parse_char(".", t),
+        partial(parse_span, func=str.isdigit),
+    )
+    assert value == "12.34"
+    assert rest == "asdf"
